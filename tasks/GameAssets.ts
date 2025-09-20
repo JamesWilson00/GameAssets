@@ -1,6 +1,23 @@
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
+// Helper function to get contract addresses based on network
+async function getContractAddresses(hre: HardhatRuntimeEnvironment) {
+  if (hre.network.name === "hardhat" || hre.network.name === "localhost") {
+    return {
+      gameAsset: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+      encryptedGameAsset: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+    };
+  } else {
+    const gameAssetDeployment = await hre.deployments.get("GameAsset");
+    const encryptedGameAssetDeployment = await hre.deployments.get("EncryptedGameAsset");
+    return {
+      gameAsset: gameAssetDeployment.address,
+      encryptedGameAsset: encryptedGameAssetDeployment.address
+    };
+  }
+}
+
 // Task to mint a regular NFT game asset
 task("mint-asset", "Mint a regular NFT game asset")
   .addParam("to", "The address to mint the asset to")
@@ -10,10 +27,8 @@ task("mint-asset", "Mint a regular NFT game asset")
   .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
     const { to, equiptype, attack, defense } = taskArgs;
 
-    const gameAsset = await hre.ethers.getContractAt(
-      "GameAsset",
-      "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-    );
+    const addresses = await getContractAddresses(hre);
+    const gameAsset = await hre.ethers.getContractAt("GameAsset", addresses.gameAsset);
 
     const tx = await gameAsset.mint(to, equiptype, attack, defense);
     await tx.wait();
@@ -25,76 +40,27 @@ task("mint-asset", "Mint a regular NFT game asset")
     console.log(`   Transaction: ${tx.hash}`);
   });
 
-// Task to create an encrypted game asset (requires encrypted inputs)
-task("create-encrypted-asset", "Create an encrypted game asset")
-  .addParam("equiptype", "Equipment type (1-4)")
-  .addParam("attack", "Attack power")
-  .addParam("defense", "Defense power")
-  .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
-    const { equiptype, attack, defense } = taskArgs;
-
-    console.log(`⚠️  Note: This task creates encrypted assets using trivial encryption`);
-    console.log(`   For production, use proper FHE encrypted inputs`);
-
-    // This would need proper FHE input creation in a real application
-    console.log(`❌ Encrypted asset creation requires FHE encrypted inputs`);
-    console.log(`   Equipment Type: ${equiptype}`);
-    console.log(`   Attack: ${attack}`);
-    console.log(`   Defense: ${defense}`);
-    console.log(`   Use the frontend with @zama-fhe/relayer-sdk for proper encryption`);
-  });
-
 // Task to convert regular NFT to encrypted asset
 task("convert-to-encrypted", "Convert regular NFT to encrypted asset")
   .addParam("tokenid", "Token ID of the regular NFT to convert")
   .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
     const { tokenid } = taskArgs;
 
-    const gameAsset = await hre.ethers.getContractAt(
-      "GameAsset",
-      "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-    );
+    const addresses = await getContractAddresses(hre);
+    const gameAsset = await hre.ethers.getContractAt("GameAsset", addresses.gameAsset);
+    const encryptedGameAsset = await hre.ethers.getContractAt("EncryptedGameAsset", addresses.encryptedGameAsset);
 
-    const assetConverter = await hre.ethers.getContractAt(
-      "AssetConverter",
-      "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
-    );
-
-    // First approve the converter to transfer the NFT
-    console.log(`Approving AssetConverter to transfer NFT #${tokenid}...`);
-    const approveTx = await gameAsset.approve("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0", tokenid);
+    // First approve the encrypted game asset contract to burn the NFT
+    console.log(`Approving EncryptedGameAsset to burn NFT #${tokenid}...`);
+    const approveTx = await gameAsset.approve(addresses.encryptedGameAsset, tokenid);
     await approveTx.wait();
 
     // Then convert to encrypted
     console.log(`Converting NFT #${tokenid} to encrypted asset...`);
-    const tx = await assetConverter.convertToEncrypted(tokenid);
+    const tx = await encryptedGameAsset.convertToEncrypted(tokenid);
     await tx.wait();
 
     console.log(`✅ Converted regular NFT ${tokenid} to encrypted asset`);
-    console.log(`   Transaction: ${tx.hash}`);
-  });
-
-// Task to convert encrypted asset to regular NFT
-task("convert-to-nft", "Convert encrypted asset to regular NFT")
-  .addParam("assetid", "Asset ID of the encrypted asset to convert")
-  .addParam("equiptype", "Equipment type (1-4)")
-  .addParam("attack", "Attack power")
-  .addParam("defense", "Defense power")
-  .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
-    const { assetid, equiptype, attack, defense } = taskArgs;
-
-    const assetConverter = await hre.ethers.getContractAt(
-      "AssetConverter",
-      "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
-    );
-
-    const tx = await assetConverter.convertToPublic(assetid, equiptype, attack, defense);
-    await tx.wait();
-
-    console.log(`✅ Converted encrypted asset ${assetid} to regular NFT`);
-    console.log(`   Equipment Type: ${equiptype}`);
-    console.log(`   Attack: ${attack}`);
-    console.log(`   Defense: ${defense}`);
     console.log(`   Transaction: ${tx.hash}`);
   });
 
@@ -104,10 +70,8 @@ task("get-asset-info", "Get regular NFT asset information")
   .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
     const { tokenid } = taskArgs;
 
-    const gameAsset = await hre.ethers.getContractAt(
-      "GameAsset",
-      "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-    );
+    const addresses = await getContractAddresses(hre);
+    const gameAsset = await hre.ethers.getContractAt("GameAsset", addresses.gameAsset);
 
     try {
       const asset = await gameAsset.getEquipment(tokenid);
@@ -129,10 +93,8 @@ task("check-encrypted-asset", "Check if encrypted asset exists")
   .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
     const { assetid } = taskArgs;
 
-    const encryptedGameAsset = await hre.ethers.getContractAt(
-      "EncryptedGameAsset",
-      "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
-    );
+    const addresses = await getContractAddresses(hre);
+    const encryptedGameAsset = await hre.ethers.getContractAt("EncryptedGameAsset", addresses.encryptedGameAsset);
 
     try {
       const exists = await encryptedGameAsset.equipmentExists(assetid);
@@ -155,15 +117,9 @@ task("get-user-assets", "Get all assets owned by a user")
   .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
     const { address } = taskArgs;
 
-    const gameAsset = await hre.ethers.getContractAt(
-      "GameAsset",
-      "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-    );
-
-    const encryptedGameAsset = await hre.ethers.getContractAt(
-      "EncryptedGameAsset",
-      "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
-    );
+    const addresses = await getContractAddresses(hre);
+    const gameAsset = await hre.ethers.getContractAt("GameAsset", addresses.gameAsset);
+    const encryptedGameAsset = await hre.ethers.getContractAt("EncryptedGameAsset", addresses.encryptedGameAsset);
 
     console.log(`👤 Assets owned by ${address}:`);
 

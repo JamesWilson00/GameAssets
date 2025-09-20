@@ -19,21 +19,11 @@ async function main() {
   console.log(`✅ GameAsset deployed to: ${await gameAsset.getAddress()}`);
   
   const EncryptedGameAssetFactory = await ethers.getContractFactory("EncryptedGameAsset");
-  const encryptedGameAsset = await EncryptedGameAssetFactory.deploy();
-  console.log(`✅ EncryptedGameAsset deployed to: ${await encryptedGameAsset.getAddress()}`);
-  
-  const AssetConverterFactory = await ethers.getContractFactory("AssetConverter");
-  const assetConverter = await AssetConverterFactory.deploy(
-    await gameAsset.getAddress(),
-    await encryptedGameAsset.getAddress(),
-    deployer.address
+  const encryptedGameAsset = await EncryptedGameAssetFactory.deploy(
+    deployer.address,
+    await gameAsset.getAddress()
   );
-  console.log(`✅ AssetConverter deployed to: ${await assetConverter.getAddress()}\n`);
-
-  // Grant MINTER_ROLE to AssetConverter
-  const MINTER_ROLE = await gameAsset.MINTER_ROLE();
-  await gameAsset.grantRole(MINTER_ROLE, await assetConverter.getAddress());
-  console.log("✅ Granted MINTER_ROLE to AssetConverter\n");
+  console.log(`✅ EncryptedGameAsset deployed to: ${await encryptedGameAsset.getAddress()}\n`);
 
   // Demo regular NFT functionality
   console.log("🏆 Regular NFT Demo:");
@@ -75,7 +65,7 @@ async function main() {
 
   console.log("🔄 Asset Conversion Demo:");
   console.log("=========================");
-  console.log("The AssetConverter contract allows converting between regular NFTs and encrypted assets");
+  console.log("The EncryptedGameAsset contract now includes conversion functionality");
   console.log("This enables players to move assets between public and private gaming contexts.\n");
 
   console.log("🎯 Summary:");

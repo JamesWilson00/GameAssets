@@ -9,7 +9,8 @@ import {
   ASSET_CONVERTER_ABI,
   EQUIPMENT_TYPES,
   type GameAsset,
-  type EncryptedGameAsset
+  type EncryptedGameAsset,
+  type EquipmentType
 } from '../config/gameAssets';
 
 export function AssetConverter() {
@@ -17,6 +18,8 @@ export function AssetConverter() {
   const [selectedNFTId, setSelectedNFTId] = useState<number | null>(null);
   const [selectedEncryptedId, setSelectedEncryptedId] = useState<number | null>(null);
   const [conversionType, setConversionType] = useState<'toEncrypted' | 'toNFT'>('toEncrypted');
+  const [nftAssets, setNftAssets] = useState<GameAsset[]>([]);
+  const [encryptedAssets, setEncryptedAssets] = useState<EncryptedGameAsset[]>([]);
 
   // 合约交互
   const { writeContract, data: hash, error, isPending } = useWriteContract();
@@ -29,6 +32,14 @@ export function AssetConverter() {
     address: GAME_ASSET_ADDRESS,
     abi: GAME_ASSET_ABI,
     functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+  });
+
+  // 读取用户拥有的NFT装备
+  const { data: allNFTEquipments } = useReadContract({
+    address: GAME_ASSET_ADDRESS,
+    abi: GAME_ASSET_ABI,
+    functionName: 'getAllEquipments',
     args: address ? [address] : undefined,
   });
 
@@ -72,11 +83,70 @@ export function AssetConverter() {
     }
   };
 
+  // 加载NFT资产
+  const loadNFTAssets = () => {
+    if (!allNFTEquipments || !address) return;
+
+    try {
+      const [tokenIds, equipments] = allNFTEquipments as [bigint[], any[]];
+
+      const assets: GameAsset[] = tokenIds.map((tokenId, index) => {
+        const equipment = equipments[index];
+        return {
+          tokenId: Number(tokenId),
+          equipmentType: Number(equipment.equipmentType) as EquipmentType,
+          attackPower: Number(equipment.attackPower),
+          defensePower: Number(equipment.defensePower),
+          owner: address
+        };
+      });
+
+      setNftAssets(assets);
+    } catch (error) {
+      console.error('加载NFT资产失败:', error);
+    }
+  };
+
+  // 加载加密资产（模拟数据，实际需要合约支持）
+  const loadEncryptedAssets = () => {
+    if (!encryptedBalance || !address) return;
+
+    try {
+      // 由于加密资产的属性是加密的，这里只能显示基本信息
+      const assets: EncryptedGameAsset[] = [];
+      const count = Number(encryptedBalance);
+
+      for (let i = 0; i < count; i++) {
+        assets.push({
+          assetId: i,
+          encryptedEquipmentType: `encrypted_type_${i}`,
+          encryptedAttack: `encrypted_attack_${i}`,
+          encryptedDefense: `encrypted_defense_${i}`,
+          owner: address
+        });
+      }
+
+      setEncryptedAssets(assets);
+    } catch (error) {
+      console.error('加载加密资产失败:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadNFTAssets();
+  }, [allNFTEquipments, address]);
+
+  useEffect(() => {
+    loadEncryptedAssets();
+  }, [encryptedBalance, address]);
+
   useEffect(() => {
     if (isConfirmed) {
-      // 重置选择
+      // 重置选择并重新加载数据
       setSelectedNFTId(null);
       setSelectedEncryptedId(null);
+      loadNFTAssets();
+      loadEncryptedAssets();
     }
   }, [isConfirmed]);
 
@@ -168,19 +238,70 @@ export function AssetConverter() {
               您拥有 {nftBalance ? nftBalance.toString() : '0'} 个NFT装备
             </div>
 
-            {/* 这里应该显示用户的NFT列表 */}
+            {/* NFT装备列表 */}
             <div style={{
               border: '1px solid #d1d5db',
               borderRadius: '6px',
-              padding: '12px',
               backgroundColor: 'white',
               minHeight: '120px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#6b7280'
+              maxHeight: '300px',
+              overflow: 'auto'
             }}>
-              NFT列表加载中... (需要实现NFT获取逻辑)
+              {nftAssets.length === 0 ? (
+                <div style={{
+                  padding: '40px',
+                  textAlign: 'center',
+                  color: '#6b7280'
+                }}>
+                  没有可转换的NFT装备
+                </div>
+              ) : (
+                <div style={{ padding: '8px' }}>
+                  {nftAssets.map((asset) => (
+                    <div
+                      key={asset.tokenId}
+                      style={{
+                        padding: '12px',
+                        margin: '4px 0',
+                        border: selectedNFTId === asset.tokenId ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        backgroundColor: selectedNFTId === asset.tokenId ? '#eff6ff' : 'white',
+                        transition: 'all 0.2s'
+                      }}
+                      onClick={() => setSelectedNFTId(asset.tokenId)}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <div style={{ fontWeight: '600', color: '#1f2937' }}>
+                            {EQUIPMENT_TYPES[asset.equipmentType]} #{asset.tokenId}
+                          </div>
+                          <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                            攻击力: {asset.attackPower} | 防御力: {asset.defensePower}
+                          </div>
+                        </div>
+                        {selectedNFTId === asset.tokenId && (
+                          <div style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            backgroundColor: '#3b82f6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <span style={{ color: 'white', fontSize: '12px' }}>✓</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {selectedNFTId && (
@@ -224,19 +345,78 @@ export function AssetConverter() {
               您拥有 {encryptedBalance ? encryptedBalance.toString() : '0'} 个加密装备
             </div>
 
-            {/* 这里应该显示用户的加密资产列表 */}
+            {/* 加密资产列表 */}
             <div style={{
               border: '1px solid #d1d5db',
               borderRadius: '6px',
-              padding: '12px',
               backgroundColor: 'white',
               minHeight: '120px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#6b7280'
+              maxHeight: '300px',
+              overflow: 'auto'
             }}>
-              加密资产列表加载中... (需要实现加密资产获取逻辑)
+              {encryptedAssets.length === 0 ? (
+                <div style={{
+                  padding: '40px',
+                  textAlign: 'center',
+                  color: '#6b7280'
+                }}>
+                  没有可转换的加密装备
+                </div>
+              ) : (
+                <div style={{ padding: '8px' }}>
+                  {encryptedAssets.map((asset) => (
+                    <div
+                      key={asset.assetId}
+                      style={{
+                        padding: '12px',
+                        margin: '4px 0',
+                        border: selectedEncryptedId === asset.assetId ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        backgroundColor: selectedEncryptedId === asset.assetId ? '#eff6ff' : 'white',
+                        transition: 'all 0.2s'
+                      }}
+                      onClick={() => setSelectedEncryptedId(asset.assetId)}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <div style={{ fontWeight: '600', color: '#1f2937' }}>
+                            🔒 加密装备 #{asset.assetId}
+                          </div>
+                          <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                            装备类型: <span style={{
+                              fontFamily: 'monospace',
+                              backgroundColor: '#f3f4f6',
+                              padding: '2px 4px',
+                              borderRadius: '3px'
+                            }}>加密中...</span>
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
+                            所有属性已使用FHE加密保护
+                          </div>
+                        </div>
+                        {selectedEncryptedId === asset.assetId && (
+                          <div style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            backgroundColor: '#3b82f6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <span style={{ color: 'white', fontSize: '12px' }}>✓</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {selectedEncryptedId && (

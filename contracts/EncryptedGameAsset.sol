@@ -4,16 +4,19 @@ pragma solidity ^0.8.24;
 import {FHE, euint8, euint32, externalEuint8, externalEuint32, ebool} from "@fhevm/solidity/lib/FHE.sol";
 import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./GameAsset.sol";
 
 contract EncryptedGameAsset is SepoliaConfig, AccessControl {
     struct EncryptedEquipment {
-        euint8 equipmentType;   // Encrypted equipment type (1-4)
-        euint32 attackPower;    // Encrypted attack power
-        euint32 defensePower;   // Encrypted defense power
-        address owner;          // Owner address (not encrypted)
+        euint8 equipmentType; // Encrypted equipment type (1-4)
+        euint32 attackPower; // Encrypted attack power
+        euint32 defensePower; // Encrypted defense power
+        address owner; // Owner address (not encrypted)
     }
 
     bytes32 public constant CONVERTER_ROLE = keccak256("CONVERTER_ROLE");
+
+    GameAsset public gameAssetContract;
 
     mapping(uint256 => EncryptedEquipment) public encryptedEquipments;
     mapping(address => uint256[]) public ownerEquipments;
@@ -21,84 +24,25 @@ contract EncryptedGameAsset is SepoliaConfig, AccessControl {
 
     event EncryptedEquipmentCreated(uint256 indexed assetId, address indexed owner);
     event EncryptedEquipmentTransferred(uint256 indexed assetId, address indexed from, address indexed to);
+    event AssetConverted(
+        address indexed user,
+        uint256 indexed fromTokenId,
+        uint256 indexed toAssetId,
+        bool toEncrypted
+    );
+    event EncryptedAssetConverted(
+        address indexed user,
+        uint256 indexed fromAssetId,
+        uint256 indexed toTokenId,
+        bool toPublic
+    );
 
-    constructor(address initialOwner) {
+    constructor(address initialOwner, address _gameAssetContract) {
         _nextAssetId = 1;
         _grantRole(DEFAULT_ADMIN_ROLE, initialOwner);
+        gameAssetContract = GameAsset(_gameAssetContract);
     }
 
-    function createEncryptedEquipment(
-        externalEuint8 equipmentType,
-        externalEuint32 attackPower,
-        externalEuint32 defensePower,
-        bytes calldata inputProof
-    ) external returns (uint256) {
-        euint8 encryptedType = FHE.fromExternal(equipmentType, inputProof);
-        euint32 encryptedAttack = FHE.fromExternal(attackPower, inputProof);
-        euint32 encryptedDefense = FHE.fromExternal(defensePower, inputProof);
-
-        // Validate equipment type is between 1-4
-        ebool validType1 = FHE.ge(encryptedType, 1);
-        ebool validType2 = FHE.le(encryptedType, 4);
-        ebool validType = FHE.and(validType1, validType2);
-        
-        // Use FHE.select to ensure only valid equipment is created
-        euint8 finalType = FHE.select(validType, encryptedType, FHE.asEuint8(1));
-        
-        uint256 assetId = _nextAssetId;
-        _nextAssetId++;
-
-        encryptedEquipments[assetId] = EncryptedEquipment({
-            equipmentType: finalType,
-            attackPower: encryptedAttack,
-            defensePower: encryptedDefense,
-            owner: msg.sender
-        });
-
-        ownerEquipments[msg.sender].push(assetId);
-
-        // Set ACL permissions
-        FHE.allowThis(finalType);
-        FHE.allowThis(encryptedAttack);
-        FHE.allowThis(encryptedDefense);
-        FHE.allow(finalType, msg.sender);
-        FHE.allow(encryptedAttack, msg.sender);
-        FHE.allow(encryptedDefense, msg.sender);
-
-        emit EncryptedEquipmentCreated(assetId, msg.sender);
-        return assetId;
-    }
-
-    // Function for converter contract to create encrypted equipment from already encrypted values
-    function createEncryptedEquipmentFromConverter(
-        euint8 equipmentType,
-        euint32 attackPower,
-        euint32 defensePower,
-        address owner
-    ) external onlyRole(CONVERTER_ROLE) returns (uint256) {
-        uint256 assetId = _nextAssetId;
-        _nextAssetId++;
-
-        encryptedEquipments[assetId] = EncryptedEquipment({
-            equipmentType: equipmentType,
-            attackPower: attackPower,
-            defensePower: defensePower,
-            owner: owner
-        });
-
-        ownerEquipments[owner].push(assetId);
-
-        // Set ACL permissions
-        FHE.allowThis(equipmentType);
-        FHE.allowThis(attackPower);
-        FHE.allowThis(defensePower);
-        FHE.allow(equipmentType, owner);
-        FHE.allow(attackPower, owner);
-        FHE.allow(defensePower, owner);
-
-        emit EncryptedEquipmentCreated(assetId, owner);
-        return assetId;
-    }
 
     function transferEncryptedEquipment(uint256 assetId, address to) external {
         require(encryptedEquipments[assetId].owner == msg.sender, "Not the owner");
@@ -159,62 +103,81 @@ contract EncryptedGameAsset is SepoliaConfig, AccessControl {
         return encryptedEquipments[assetId].owner != address(0);
     }
 
-    // Function to combine two encrypted equipments (example of FHE operations)
-    function combineEquipments(uint256 assetId1, uint256 assetId2) external returns (uint256) {
-        require(encryptedEquipments[assetId1].owner == msg.sender, "Not owner of first equipment");
-        require(encryptedEquipments[assetId2].owner == msg.sender, "Not owner of second equipment");
+    // Convert regular NFT to encrypted asset
+    function convertToEncrypted(uint256 tokenId) external {
+        require(gameAssetContract.ownerOf(tokenId) == msg.sender, "Not the owner of the NFT");
 
-        EncryptedEquipment storage eq1 = encryptedEquipments[assetId1];
-        EncryptedEquipment storage eq2 = encryptedEquipments[assetId2];
+        // Get equipment data from NFT
+        GameAsset.Equipment memory equipment = gameAssetContract.getEquipment(tokenId);
 
-        // Combine attack and defense powers
-        euint32 combinedAttack = FHE.add(eq1.attackPower, eq2.attackPower);
-        euint32 combinedDefense = FHE.add(eq1.defensePower, eq2.defensePower);
+        // Burn the NFT (transfer to this contract first, then burn)
+        gameAssetContract.transferFrom(msg.sender, address(this), tokenId);
+        gameAssetContract.burn(tokenId);
 
-        // Use the higher equipment type
-        ebool type1Higher = FHE.gt(eq1.equipmentType, eq2.equipmentType);
-        euint8 combinedType = FHE.select(type1Higher, eq1.equipmentType, eq2.equipmentType);
+        // Create encrypted versions of the stats
+        euint8 encryptedType = FHE.asEuint8(equipment.equipmentType);
+        euint32 encryptedAttack = FHE.asEuint32(equipment.attackPower);
+        euint32 encryptedDefense = FHE.asEuint32(equipment.defensePower);
 
-        uint256 newAssetId = _nextAssetId;
-        _nextAssetId++;
+        // Create encrypted asset using the internal function
+        uint256 encryptedAssetId = _createEncryptedEquipment(
+            encryptedType,
+            encryptedAttack,
+            encryptedDefense,
+            msg.sender
+        );
 
-        encryptedEquipments[newAssetId] = EncryptedEquipment({
-            equipmentType: combinedType,
-            attackPower: combinedAttack,
-            defensePower: combinedDefense,
-            owner: msg.sender
-        });
-
-        ownerEquipments[msg.sender].push(newAssetId);
-
-        // Set ACL permissions
-        FHE.allowThis(combinedType);
-        FHE.allowThis(combinedAttack);
-        FHE.allowThis(combinedDefense);
-        FHE.allow(combinedType, msg.sender);
-        FHE.allow(combinedAttack, msg.sender);
-        FHE.allow(combinedDefense, msg.sender);
-
-        // Remove the original equipments
-        delete encryptedEquipments[assetId1];
-        delete encryptedEquipments[assetId2];
-
-        // Remove from owner's equipment list
-        _removeFromOwnerList(assetId1);
-        _removeFromOwnerList(assetId2);
-
-        emit EncryptedEquipmentCreated(newAssetId, msg.sender);
-        return newAssetId;
+        emit AssetConverted(msg.sender, tokenId, encryptedAssetId, true);
     }
 
-    function _removeFromOwnerList(uint256 assetId) private {
-        uint256[] storage equipments = ownerEquipments[msg.sender];
-        for (uint256 i = 0; i < equipments.length; i++) {
-            if (equipments[i] == assetId) {
-                equipments[i] = equipments[equipments.length - 1];
-                equipments.pop();
-                break;
-            }
-        }
+    // Internal function to create encrypted equipment
+    function _createEncryptedEquipment(
+        euint8 equipmentType,
+        euint32 attackPower,
+        euint32 defensePower,
+        address owner
+    ) internal returns (uint256) {
+        uint256 assetId = _nextAssetId;
+        _nextAssetId++;
+
+        encryptedEquipments[assetId] = EncryptedEquipment({
+            equipmentType: equipmentType,
+            attackPower: attackPower,
+            defensePower: defensePower,
+            owner: owner
+        });
+
+        ownerEquipments[owner].push(assetId);
+
+        // Set ACL permissions
+        FHE.allowThis(equipmentType);
+        FHE.allowThis(attackPower);
+        FHE.allowThis(defensePower);
+        FHE.allow(equipmentType, owner);
+        FHE.allow(attackPower, owner);
+        FHE.allow(defensePower, owner);
+
+        emit EncryptedEquipmentCreated(assetId, owner);
+        return assetId;
+    }
+
+    // Update the existing function to use the internal function
+    function createEncryptedEquipmentFromConverter(
+        euint8 equipmentType,
+        euint32 attackPower,
+        euint32 defensePower,
+        address owner
+    ) external onlyRole(CONVERTER_ROLE) returns (uint256) {
+        return _createEncryptedEquipment(equipmentType, attackPower, defensePower, owner);
+    }
+
+    // Function to set the GameAsset contract address (only admin)
+    function setGameAssetContract(address _gameAssetContract) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        gameAssetContract = GameAsset(_gameAssetContract);
+    }
+
+    // View function to get the GameAsset contract address
+    function getGameAssetContract() external view returns (address) {
+        return address(gameAssetContract);
     }
 }

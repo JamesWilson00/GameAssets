@@ -126,22 +126,30 @@ export function NFTAssetManager() {
   }, [address, allEquipments]);
 
   const cardStyle = {
-    border: '1px solid #e5e7eb',
-    borderRadius: '8px',
-    padding: '16px',
-    backgroundColor: '#f9fafb'
+    border: '1px solid rgba(79, 172, 254, 0.2)',
+    borderRadius: '16px',
+    padding: '24px',
+    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+    backdropFilter: 'blur(10px)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+    position: 'relative' as const,
+    overflow: 'hidden'
   };
 
   const buttonStyle = {
-    backgroundColor: '#3b82f6',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    padding: '10px 20px',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '12px',
+    padding: '12px 24px',
     cursor: 'pointer',
     fontSize: '14px',
-    fontWeight: '500',
-    transition: 'background-color 0.2s'
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+    position: 'relative' as const,
+    overflow: 'hidden'
   };
 
   const inputStyle = {
@@ -159,14 +167,32 @@ export function NFTAssetManager() {
 
   return (
     <div>
-      <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '24px', color: '#1f2937' }}>
-        Regular NFT Asset Management
+      <h2 style={{
+        fontSize: '24px',
+        fontWeight: '700',
+        marginBottom: '32px',
+        color: '#ffffff',
+        background: 'linear-gradient(45deg, #4facfe 0%, #00f2fe 100%)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+        textShadow: '0 0 20px rgba(79, 172, 254, 0.3)',
+        fontFamily: '"Orbitron", monospace'
+      }}>
+        🗡️ Regular NFT Asset Management
       </h2>
 
       {/* Create new asset */}
       <div style={{ ...cardStyle, marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: '16px', color: '#374151' }}>
-          Random Generate Equipment NFT
+        <h3 style={{
+          fontSize: '18px',
+          fontWeight: '600',
+          marginBottom: '20px',
+          color: '#ffffff',
+          fontFamily: '"Rajdhani", sans-serif',
+          textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+        }}>
+          🎲 Random Generate Equipment NFT
         </h3>
 
         <div style={{

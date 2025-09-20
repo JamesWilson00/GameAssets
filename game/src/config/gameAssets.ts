@@ -1,8 +1,8 @@
-// 游戏资产合约地址和ABI - 从deployments/sepolia复制
+// Game asset contract addresses and ABI - copied from deployments/sepolia
 export const GAME_ASSET_ADDRESS = '0xc8010c6A0c602Db46C6E0e42C744AE3c3923d866';
 export const ENCRYPTED_GAME_ASSET_ADDRESS = '0x8D0A458F6dFe1656b6BbEa206E5A35BBA1d1992a';
 
-// 从GameAsset.json复制的关键ABI函数
+// Key ABI functions copied from GameAsset.json
 export const GAME_ASSET_ABI = [
   {
     "inputs": [
@@ -294,7 +294,7 @@ export const GAME_ASSET_ABI = [
   }
 ] as const;
 
-// 加密游戏资产ABI（更新后的版本）
+// Encrypted game asset ABI (updated version)
 export const ENCRYPTED_GAME_ASSET_ABI = [
   {
     "inputs": [
@@ -503,17 +503,17 @@ export const ENCRYPTED_GAME_ASSET_ABI = [
   }
 ] as const;
 
-// 装备类型枚举
+// Equipment type enumeration
 export const EQUIPMENT_TYPES = {
-  1: "武器",
-  2: "护甲",
-  3: "头盔",
-  4: "饰品"
+  1: "Weapon",
+  2: "Armor",
+  3: "Helmet",
+  4: "Accessory"
 } as const;
 
 export type EquipmentType = keyof typeof EQUIPMENT_TYPES;
 
-// 游戏资产接口
+// Game asset interfaces
 export interface GameAsset {
   tokenId: number;
   equipmentType: EquipmentType;
@@ -524,8 +524,8 @@ export interface GameAsset {
 
 export interface EncryptedGameAsset {
   assetId: number;
-  encryptedEquipmentType: string; // 加密的装备类型handle
-  encryptedAttack: string; // 加密的攻击力handle
-  encryptedDefense: string; // 加密的防御力handle
+  encryptedEquipmentType: string; // Encrypted equipment type handle
+  encryptedAttack: string; // Encrypted attack power handle
+  encryptedDefense: string; // Encrypted defense power handle
   owner: string;
 }

@@ -13,20 +13,20 @@ export function NFTAssetManager() {
   const [assets, setAssets] = useState<GameAsset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 随机装备状态
+  // Random equipment state
   const [randomEquipment, setRandomEquipment] = useState<{
     equipmentType: EquipmentType;
     attack: number;
     defense: number;
   } | null>(null);
 
-  // 合约交互
+  // Contract interaction
   const { writeContract, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   });
 
-  // 读取用户拥有的NFT数量
+  // Read user's NFT balance
   const { data: balance } = useReadContract({
     address: GAME_ASSET_ADDRESS,
     abi: GAME_ASSET_ABI,
@@ -34,7 +34,7 @@ export function NFTAssetManager() {
     args: address ? [address] : undefined,
   });
 
-  // 读取用户的所有装备
+  // Read user's all equipment
   const { data: allEquipments } = useReadContract({
     address: GAME_ASSET_ADDRESS,
     abi: GAME_ASSET_ABI,
@@ -42,7 +42,7 @@ export function NFTAssetManager() {
     args: address ? [address] : undefined,
   });
 
-  // 随机生成装备
+  // Generate random equipment
   const generateRandomEquipment = () => {
     const equipmentTypes = [1, 2, 3, 4] as EquipmentType[];
     const randomType = equipmentTypes[Math.floor(Math.random() * equipmentTypes.length)];
@@ -55,19 +55,19 @@ export function NFTAssetManager() {
       defense: randomDefense
     };
 
-    console.log('生成随机装备:', randomEquip);
+    console.log('Generated random equipment:', randomEquip);
 
     setRandomEquipment(randomEquip);
   };
 
-  // 创建NFT资产
+  // Mint NFT Asset
   const handleMintAsset = async () => {
     if (!address || !randomEquipment) {
-      alert('请先生成随机装备！');
+      alert('Please generate random equipment first!');
       return;
     }
 
-    console.log('准备铸造NFT，参数:', {
+    console.log('Preparing to mint NFT, parameters:', {
       to: address,
       equipmentType: randomEquipment.equipmentType,
       attack: randomEquipment.attack,
@@ -82,11 +82,11 @@ export function NFTAssetManager() {
         args: [address, randomEquipment.equipmentType, randomEquipment.attack, randomEquipment.defense],
       });
     } catch (error) {
-      console.error('创建NFT失败:', error);
+      console.error('Failed to create NFT:', error);
     }
   };
 
-  // 加载用户资产
+  // Load user assets
   const loadUserAssets = async () => {
     if (!allEquipments || !address) return;
 
@@ -107,7 +107,7 @@ export function NFTAssetManager() {
 
       setAssets(userAssets);
     } catch (error) {
-      console.error('加载资产失败:', error);
+      console.error('Failed to load assets:', error);
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +116,7 @@ export function NFTAssetManager() {
   useEffect(() => {
     if (isConfirmed) {
       loadUserAssets();
-      // 重置随机装备
+      // Reset random equipment
       setRandomEquipment(null);
     }
   }, [isConfirmed]);
@@ -160,13 +160,13 @@ export function NFTAssetManager() {
   return (
     <div>
       <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '24px', color: '#1f2937' }}>
-        普通NFT资产管理
+        Regular NFT Asset Management
       </h2>
 
-      {/* 创建新资产 */}
+      {/* Create new asset */}
       <div style={{ ...cardStyle, marginBottom: '24px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: '16px', color: '#374151' }}>
-          随机生成装备NFT
+          Random Generate Equipment NFT
         </h3>
 
         <div style={{
@@ -179,23 +179,23 @@ export function NFTAssetManager() {
           {randomEquipment ? (
             <div>
               <div style={{ fontSize: '16px', fontWeight: '600', color: '#16a34a', marginBottom: '12px' }}>
-                🎲 随机装备已生成：
+                🎲 Random Equipment Generated:
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>装备类型</div>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Equipment Type</div>
                   <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
                     {EQUIPMENT_TYPES[randomEquipment.equipmentType]}
                   </div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>攻击力</div>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Attack Power</div>
                   <div style={{ fontSize: '16px', fontWeight: '600', color: '#dc2626' }}>
                     {randomEquipment.attack}
                   </div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>防御力</div>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Defense Power</div>
                   <div style={{ fontSize: '16px', fontWeight: '600', color: '#2563eb' }}>
                     {randomEquipment.defense}
                   </div>
@@ -204,7 +204,7 @@ export function NFTAssetManager() {
             </div>
           ) : (
             <div style={{ textAlign: 'center', color: '#6b7280' }}>
-              点击"🎲 随机生成装备"按钮来生成随机装备属性
+              Click "🎲 Generate Random Equipment" button to generate random equipment attributes
             </div>
           )}
         </div>
@@ -219,7 +219,7 @@ export function NFTAssetManager() {
             }}
             onClick={generateRandomEquipment}
           >
-            🎲 随机生成装备
+            🎲 Generate Random Equipment
           </button>
 
           <button
@@ -234,7 +234,7 @@ export function NFTAssetManager() {
             onClick={handleMintAsset}
             disabled={isPending || isConfirming || !randomEquipment}
           >
-            {isPending ? '确认中...' : isConfirming ? '铸造中...' : '🎮 创建装备NFT'}
+            {isPending ? 'Confirming...' : isConfirming ? 'Minting...' : '🎮 Create Equipment NFT'}
           </button>
         </div>
 
@@ -248,7 +248,7 @@ export function NFTAssetManager() {
             color: '#dc2626',
             fontSize: '14px'
           }}>
-            错误: {error.message}
+            Error: {error.message}
           </div>
         )}
 
@@ -262,24 +262,24 @@ export function NFTAssetManager() {
             color: '#16a34a',
             fontSize: '14px'
           }}>
-            🎉 随机装备NFT创建成功！
+            🎉 Random Equipment NFT Created Successfully!
           </div>
         )}
       </div>
 
-      {/* 资产列表 */}
+      {/* Asset list */}
       <div style={cardStyle}>
         <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: '16px', color: '#374151' }}>
-          我的装备NFT ({balance ? balance.toString() : '0'})
+          My Equipment NFTs ({balance ? balance.toString() : '0'})
         </h3>
 
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-            加载中...
+            Loading...
           </div>
         ) : assets.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-            还没有任何装备NFT
+            No equipment NFTs yet
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
@@ -294,10 +294,10 @@ export function NFTAssetManager() {
                   {EQUIPMENT_TYPES[asset.equipmentType]} #{asset.tokenId}
                 </div>
                 <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>
-                  攻击力: {asset.attackPower}
+                  Attack: {asset.attackPower}
                 </div>
                 <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
-                  防御力: {asset.defensePower}
+                  Defense: {asset.defensePower}
                 </div>
                 <div style={{ fontSize: '12px', color: '#9ca3af' }}>
                   Token ID: {asset.tokenId}

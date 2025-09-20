@@ -8,11 +8,8 @@ export function Header() {
         <div className="header-content">
           <div className="header-left">
             <h1 className="header-title">
-              游戏资产管理系统
+              Game Asset Management System
             </h1>
-            <span className="header-badge">
-              FHE加密
-            </span>
           </div>
           <ConnectButton />
         </div>

@@ -66,13 +66,13 @@ export function GameAssetsApp() {
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
           }}>
             <h2 style={{ fontSize: '24px', marginBottom: '16px', color: '#1f2937' }}>
-              加密游戏资产管理系统
+              Encrypted Game Asset Management System
             </h2>
             <p style={{ fontSize: '16px', color: '#6b7280', marginBottom: '24px' }}>
-              请连接您的钱包以开始管理游戏资产
+              Please connect your wallet to start managing game assets
             </p>
             <p style={{ fontSize: '14px', color: '#9ca3af' }}>
-              支持普通NFT资产和Zama加密资产的创建、查看和转换
+              Supports creation, viewing and conversion of regular NFT assets and Zama encrypted assets
             </p>
           </div>
         </div>
@@ -90,13 +90,13 @@ export function GameAssetsApp() {
               style={tabStyle(activeTab === 'nft')}
               onClick={() => setActiveTab('nft')}
             >
-              普通NFT资产
+              Regular NFT Assets
             </button>
             <button
               style={tabStyle(activeTab === 'encrypted')}
               onClick={() => setActiveTab('encrypted')}
             >
-              加密游戏资产
+              Encrypted Game Assets
             </button>
           </div>
 
@@ -116,11 +116,11 @@ export function GameAssetsApp() {
           color: '#6b7280'
         }}>
           <h3 style={{ fontSize: '16px', color: '#1f2937', marginBottom: '8px' }}>
-            功能说明：
+            Feature Description:
           </h3>
           <ul style={{ lineHeight: '1.6', paddingLeft: '20px' }}>
-            <li><strong>普通NFT资产：</strong>创建和管理装备类型(1-4)、攻击力、防御力透明可见的NFT</li>
-            <li><strong>加密游戏资产：</strong>使用Zama FHE技术加密装备属性，保护游戏数据隐私，支持普通NFT转换为加密资产</li>
+            <li><strong>Regular NFT Assets:</strong> Create and manage NFTs with transparent equipment types (1-4), attack power, and defense power</li>
+            <li><strong>Encrypted Game Assets:</strong> Use Zama FHE technology to encrypt equipment attributes, protect game data privacy, support conversion of regular NFTs to encrypted assets</li>
           </ul>
         </div>
       </div>

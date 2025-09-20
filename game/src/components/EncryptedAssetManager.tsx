@@ -35,13 +35,13 @@ export function EncryptedAssetManager() {
   }>({});
 
 
-  // 合约交互
+  // Contract interaction
   const { writeContract, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   });
 
-  // 读取用户拥有的加密资产数量
+  // Read user's encrypted asset count
   const { data: assetCount } = useReadContract({
     address: ENCRYPTED_GAME_ASSET_ADDRESS,
     abi: ENCRYPTED_GAME_ASSET_ABI,
@@ -49,7 +49,7 @@ export function EncryptedAssetManager() {
     args: address ? [address] : undefined,
   });
 
-  // 读取用户拥有的加密资产ID列表
+  // Read user's encrypted asset ID list
   const { data: encryptedAssetIds } = useReadContract({
     address: ENCRYPTED_GAME_ASSET_ADDRESS,
     abi: ENCRYPTED_GAME_ASSET_ABI,
@@ -60,7 +60,7 @@ export function EncryptedAssetManager() {
     },
   });
 
-  // 为每个加密资产生成读取加密句柄的合约调用
+  // Generate contract calls to read encrypted handles for each asset
   const getEncryptedAssetHandles = (assetIds: bigint[]) => {
     const contracts: any[] = [];
     assetIds.forEach(assetId => {
@@ -88,7 +88,7 @@ export function EncryptedAssetManager() {
     return contracts;
   };
 
-  // 批量读取所有加密资产的句柄
+  // Batch read all encrypted asset handles
   const { data: encryptedHandlesData } = useReadContracts({
     contracts: encryptedAssetIds && Array.isArray(encryptedAssetIds) ?
       getEncryptedAssetHandles(encryptedAssetIds as bigint[]) : [],
@@ -97,7 +97,7 @@ export function EncryptedAssetManager() {
     },
   });
 
-  // 读取用户拥有的NFT数量
+  // Read user's NFT count
   const { data: nftCount } = useReadContract({
     address: GAME_ASSET_ADDRESS,
     abi: GAME_ASSET_ABI,
@@ -105,7 +105,7 @@ export function EncryptedAssetManager() {
     args: address ? [address] : undefined,
   });
 
-  // 读取用户的所有NFT
+  // Read user's all NFTs
   const { data: allNftData } = useReadContract({
     address: GAME_ASSET_ADDRESS,
     abi: GAME_ASSET_ABI,
@@ -117,7 +117,7 @@ export function EncryptedAssetManager() {
   });
 
 
-  // 读取每个NFT的授权状态
+  // Read each NFT's approval status
   const getNftApprovals = (tokenIds: number[]) => {
     return tokenIds.map(tokenId => ({
       address: GAME_ASSET_ADDRESS,
@@ -127,7 +127,7 @@ export function EncryptedAssetManager() {
     }));
   };
 
-  // 使用useReadContracts批量读取授权状态
+  // Use useReadContracts to batch read approval status
   const { data: approvalData, refetch: refetchApprovals } = useReadContracts({
     contracts: nfts.length > 0 ? getNftApprovals(nfts.map(nft => nft.tokenId)) : [],
     query: {
@@ -135,7 +135,7 @@ export function EncryptedAssetManager() {
     },
   });
 
-  // 检查全局授权状态
+  // Check global approval status
   const { data: isApprovedForAll } = useReadContract({
     address: GAME_ASSET_ADDRESS,
     abi: GAME_ASSET_ABI,
@@ -147,7 +147,7 @@ export function EncryptedAssetManager() {
   });
 
 
-  // 批量授权所有NFT
+  // Batch approve all NFTs
   const handleBatchApproveAllNfts = async () => {
     if (!address) return;
 
@@ -161,20 +161,20 @@ export function EncryptedAssetManager() {
         args: [ENCRYPTED_GAME_ASSET_ADDRESS, true],
       });
 
-      // 授权成功后重新获取授权状态
+      // Refetch approval status after successful authorization
       setTimeout(() => {
         refetchApprovals();
         setIsBatchApproving(false);
       }, 3000);
 
     } catch (error) {
-      console.error('批量授权失败:', error);
-      alert('批量授权失败: ' + (error as Error).message);
+      console.error('Batch approval failed:', error);
+      alert('Batch approval failed: ' + (error as Error).message);
       setIsBatchApproving(false);
     }
   };
 
-  // 单个授权NFT（保留作为备用）
+  // Individual NFT approval (kept as backup)
   const handleApproveNft = async (tokenId: number) => {
     if (!address) return;
 
@@ -188,23 +188,23 @@ export function EncryptedAssetManager() {
         args: [ENCRYPTED_GAME_ASSET_ADDRESS, BigInt(tokenId)],
       });
 
-      // 授权成功后重新获取授权状态
+      // Refetch approval status after successful authorization
       setTimeout(() => {
         refetchApprovals();
         setIsApproving(prev => ({ ...prev, [tokenId]: false }));
       }, 3000);
 
     } catch (error) {
-      console.error('授权失败:', error);
-      alert('授权失败: ' + (error as Error).message);
+      console.error('Authorization failed:', error);
+      alert('Authorization failed: ' + (error as Error).message);
       setIsApproving(prev => ({ ...prev, [tokenId]: false }));
     }
   };
 
-  // 转换NFT为加密资产
+  // Convert NFT to encrypted asset
   const handleConvertNft = async (tokenId: number) => {
     if (!address || !approvalStatus[tokenId]) {
-      alert('请先授权此NFT');
+      alert('Please authorize this NFT first');
       return;
     }
 
@@ -217,41 +217,41 @@ export function EncryptedAssetManager() {
         functionName: 'convertToEncrypted',
         args: [BigInt(tokenId)],
       });
-      console.log('转换交易已提交，等待确认...');
-      // 注意：不要在这里重置授权状态，等交易确认后再处理
+      console.log('Conversion transaction submitted, waiting for confirmation...');
+      // Note: Don't reset approval status here, wait for transaction confirmation
     } catch (error) {
-      console.error('转换失败:', error);
-      alert('转换失败: ' + (error as Error).message);
+      console.error('Conversion failed:', error);
+      alert('Conversion failed: ' + (error as Error).message);
       setIsConverting(prev => ({ ...prev, [tokenId]: false }));
     }
   };
 
-  // 解密资产属性
+  // Decrypt asset attributes
   const handleDecryptAsset = async (assetId: number) => {
     if (!fheInstance || fheLoading || !address || !signer) return;
 
-    // 查找对应的资产数据
+    // Find corresponding asset data
     const asset = assets.find(a => a.assetId === assetId);
     if (!asset) {
-      alert('找不到对应的资产数据');
+      alert('Corresponding asset data not found');
       return;
     }
 
     setIsDecrypting(prev => ({ ...prev, [assetId]: true }));
 
     try {
-      // 使用从链上获取的真实加密句柄
+      // Use real encrypted handles obtained from the blockchain
       const encryptedTypeHandle = asset.encryptedEquipmentType;
       const encryptedAttackHandle = asset.encryptedAttack;
       const encryptedDefenseHandle = asset.encryptedDefense;
 
-      console.log('获取到的加密句柄:', {
+      console.log('Obtained encrypted handles:', {
         type: encryptedTypeHandle,
         attack: encryptedAttackHandle,
         defense: encryptedDefenseHandle
       });
 
-      // 生成密钥对
+      // Generate key pair
       const keypair = fheInstance.generateKeypair();
       const handleContractPairs = [
         {
@@ -297,13 +297,13 @@ export function EncryptedAssetManager() {
       const attackValue = result[encryptedAttackHandle as string];
       const defenseValue = result[encryptedDefenseHandle as string];
 
-      console.log(`资产 ${assetId} 解密结果:`, {
+      console.log(`Asset ${assetId} decryption result:`, {
         equipmentType: equipmentTypeValue,
         attack: attackValue,
         defense: defenseValue
       });
 
-      // 将解密数据存储到状态中
+      // Store decrypted data in state
       setDecryptedData(prev => ({
         ...prev,
         [assetId]: {
@@ -313,14 +313,14 @@ export function EncryptedAssetManager() {
         }
       }));
     } catch (error) {
-      console.error('解密失败:', error);
-      alert('解密失败，请检查权限设置或网络连接');
+      console.error('Decryption failed:', error);
+      alert('Decryption failed, please check permission settings or network connection');
     } finally {
       setIsDecrypting(prev => ({ ...prev, [assetId]: false }));
     }
   };
 
-  // 处理NFT数据
+  // Handle NFT data
   useEffect(() => {
     if (allNftData && address) {
       const [tokenIds, equipments] = allNftData as [bigint[], any[]];
@@ -342,7 +342,7 @@ export function EncryptedAssetManager() {
     }
   }, [allNftData, address]);
 
-  // 加载用户加密资产详情
+  // Load user encrypted asset details
   const loadUserAssets = () => {
     if (!address || !encryptedAssetIds || !Array.isArray(encryptedAssetIds)) {
       setAssets([]);
@@ -361,7 +361,7 @@ export function EncryptedAssetManager() {
 
       assetIdArray.forEach((assetId, index) => {
         const assetIdNum = Number(assetId);
-        const handleIndex = index * 3; // 每个资产有3个句柄（type, attack, defense）
+        const handleIndex = index * 3; // Each asset has 3 handles (type, attack, defense)
 
         const typeHandle = encryptedHandlesData[handleIndex];
         const attackHandle = encryptedHandlesData[handleIndex + 1];
@@ -381,9 +381,9 @@ export function EncryptedAssetManager() {
       });
 
       setAssets(userAssets);
-      console.log('加载的加密资产:', userAssets);
+      console.log('Loaded encrypted assets:', userAssets);
     } catch (error) {
-      console.error('加载加密资产失败:', error);
+      console.error('Failed to load encrypted assets:', error);
     } finally {
       setIsLoading(false);
     }
@@ -391,11 +391,11 @@ export function EncryptedAssetManager() {
 
   useEffect(() => {
     if (isConfirmed) {
-      console.log('交易确认成功，重新加载数据...');
+      console.log('Transaction confirmed successfully, reloading data...');
       loadUserAssets();
-      // 重置所有转换状态
+      // Reset all conversion states
       setIsConverting({});
-      // 重新获取授权状态
+      // Refetch approval status
       refetchApprovals();
     }
   }, [isConfirmed]);
@@ -404,19 +404,19 @@ export function EncryptedAssetManager() {
     loadUserAssets();
   }, [address, encryptedAssetIds, encryptedHandlesData]);
 
-  // 处理授权数据
+  // Handle approval data
   useEffect(() => {
     if (nfts.length > 0) {
       const approvals: { [key: number]: boolean } = {};
 
       nfts.forEach((nft, index) => {
-        // 如果有全局授权，则所有NFT都被授权
+        // If globally approved, all NFTs are authorized
         if (isApprovedForAll) {
           approvals[nft.tokenId] = true;
         } else if (approvalData && approvalData[index]) {
           const approvalResult = approvalData[index];
           if (approvalResult?.status === 'success') {
-            // 检查授权地址是否为EncryptedGameAsset合约地址
+            // Check if approval address is EncryptedGameAsset contract
             approvals[nft.tokenId] = approvalResult.result === ENCRYPTED_GAME_ASSET_ADDRESS;
           } else {
             approvals[nft.tokenId] = false;
@@ -462,10 +462,10 @@ export function EncryptedAssetManager() {
     return (
       <div style={{ textAlign: 'center', padding: '40px' }}>
         <div style={{ fontSize: '16px', color: '#6b7280', marginBottom: '16px' }}>
-          正在初始化Zama FHE...
+          Initializing Zama FHE...
         </div>
         <div style={{ fontSize: '14px', color: '#9ca3af' }}>
-          请稍候，这可能需要几秒钟
+          Please wait, this may take a few seconds
         </div>
       </div>
     );
@@ -475,7 +475,7 @@ export function EncryptedAssetManager() {
     return (
       <div style={{ textAlign: 'center', padding: '40px' }}>
         <div style={{ fontSize: '16px', color: '#dc2626', marginBottom: '16px' }}>
-          FHE初始化失败
+          FHE initialization failed
         </div>
         <div style={{ fontSize: '14px', color: '#9ca3af' }}>
           {fheError}
@@ -487,7 +487,7 @@ export function EncryptedAssetManager() {
   return (
     <div>
       <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '24px', color: '#1f2937' }}>
-        加密游戏资产管理
+        Encrypted Game Asset Management
       </h2>
 
       <div style={{
@@ -499,15 +499,15 @@ export function EncryptedAssetManager() {
         fontSize: '14px',
         color: '#1e40af'
       }}>
-        <strong>🔒 隐私保护：</strong> 使用Zama FHE技术加密装备属性，确保游戏数据完全隐私
+        <strong>🔒 Privacy Protection:</strong> Uses Zama FHE technology to encrypt equipment attributes, ensuring complete privacy of game data
       </div>
 
 
-      {/* 第一步：NFT授权区域 - 只在有未授权的NFT时显示 */}
+      {/* Step 1: NFT Authorization Area - Only shown when there are unauthorized NFTs */}
       {nfts.length > 0 && nfts.some(nft => !approvalStatus[nft.tokenId]) && (
         <div style={{ ...cardStyle, marginBottom: '24px' }}>
           <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: '16px', color: '#374151' }}>
-            第一步：NFT授权管理
+            Step 1: NFT Authorization Management
           </h3>
 
           <div style={{
@@ -519,13 +519,13 @@ export function EncryptedAssetManager() {
             fontSize: '14px',
             color: '#0277bd'
           }}>
-            <strong>🔐 授权说明：</strong> 在转换NFT为加密资产前，需要先授权EncryptedGameAsset合约操作您的NFT。
+            <strong>🔐 Authorization Instructions:</strong> Before converting NFTs to encrypted assets, you need to authorize the EncryptedGameAsset contract to operate your NFTs.
           </div>
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                需要授权的NFT：
+                NFTs requiring authorization:
               </div>
               <button
                 style={{
@@ -539,7 +539,7 @@ export function EncryptedAssetManager() {
                 onClick={handleBatchApproveAllNfts}
                 disabled={isBatchApproving}
               >
-                {isBatchApproving ? '🔄 授权中...' : '⚡ 授权NFT'}
+                {isBatchApproving ? '🔄 Authorizing...' : '⚡ Authorize NFTs'}
               </button>
             </div>
 
@@ -562,16 +562,16 @@ export function EncryptedAssetManager() {
                       </div>
                     </div>
                     <div style={{ fontSize: '12px', color: '#dc2626', fontWeight: '500' }}>
-                      ❌ 未授权
+                      ❌ Unauthorized
                     </div>
                   </div>
 
                   <div style={{ marginBottom: '12px', fontSize: '14px', color: '#374151' }}>
                     <div style={{ marginBottom: '4px' }}>
-                      ⚔️ 攻击力: <span style={{ fontWeight: '600' }}>{nft.attackPower}</span>
+                      ⚔️ Attack: <span style={{ fontWeight: '600' }}>{nft.attackPower}</span>
                     </div>
                     <div>
-                      🛡️ 防御力: <span style={{ fontWeight: '600' }}>{nft.defensePower}</span>
+                      🛡️ Defense: <span style={{ fontWeight: '600' }}>{nft.defensePower}</span>
                     </div>
                   </div>
 
@@ -587,7 +587,7 @@ export function EncryptedAssetManager() {
                     onClick={() => handleApproveNft(nft.tokenId)}
                     disabled={isApproving[nft.tokenId]}
                   >
-                    {isApproving[nft.tokenId] ? '授权中...' : '授权此NFT'}
+                    {isApproving[nft.tokenId] ? 'Authorizing...' : 'Authorize this NFT'}
                   </button>
                 </div>
               ))}
@@ -596,10 +596,10 @@ export function EncryptedAssetManager() {
         </div>
       )}
 
-      {/* NFT转换区域 */}
+      {/* NFT Conversion Area */}
       <div style={{ ...cardStyle, marginBottom: '24px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: '16px', color: '#374151' }}>
-          {nfts.length > 0 && nfts.some(nft => !approvalStatus[nft.tokenId]) ? '第二步：' : ''}执行NFT转换
+          {nfts.length > 0 && nfts.some(nft => !approvalStatus[nft.tokenId]) ? 'Step 2: ' : ''}Execute NFT Conversion
         </h3>
 
         <div style={{
@@ -611,21 +611,21 @@ export function EncryptedAssetManager() {
           fontSize: '14px',
           color: '#856404'
         }}>
-          <strong>⚠️ 转换警告：</strong> 转换后原NFT将被永久销毁，创建对应的加密资产。请确保已完成授权。
+          <strong>⚠️ Conversion Warning:</strong> After conversion, the original NFT will be permanently destroyed and a corresponding encrypted asset will be created. Please ensure authorization is complete.
         </div>
 
         {nfts.filter(nft => approvalStatus[nft.tokenId]).length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-            没有已授权的NFT可以转换
+            No authorized NFTs available for conversion
             <br />
             <span style={{ fontSize: '12px', color: '#9ca3af' }}>
-              请先在上方授权区域授权您的NFT
+              Please authorize your NFTs in the authorization area above first
             </span>
           </div>
         ) : (
           <div>
             <div style={{ marginBottom: '16px', fontSize: '14px', color: '#6b7280' }}>
-              可转换的已授权NFT：
+              Convertible authorized NFTs:
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
@@ -647,16 +647,16 @@ export function EncryptedAssetManager() {
                       </div>
                     </div>
                     <div style={{ fontSize: '12px', color: '#16a34a', fontWeight: '500' }}>
-                      ✅ 已授权
+                      ✅ Authorized
                     </div>
                   </div>
 
                   <div style={{ marginBottom: '12px', fontSize: '14px', color: '#374151' }}>
                     <div style={{ marginBottom: '4px' }}>
-                      ⚔️ 攻击力: <span style={{ fontWeight: '600' }}>{nft.attackPower}</span>
+                      ⚔️ Attack: <span style={{ fontWeight: '600' }}>{nft.attackPower}</span>
                     </div>
                     <div>
-                      🛡️ 防御力: <span style={{ fontWeight: '600' }}>{nft.defensePower}</span>
+                      🛡️ Defense: <span style={{ fontWeight: '600' }}>{nft.defensePower}</span>
                     </div>
                   </div>
 
@@ -672,32 +672,32 @@ export function EncryptedAssetManager() {
                     onClick={() => handleConvertNft(nft.tokenId)}
                     disabled={isConverting[nft.tokenId]}
                   >
-                    {isConverting[nft.tokenId] ? '转换中...' : '🔥 转换为加密资产'}
+                    {isConverting[nft.tokenId] ? 'Converting...' : '🔥 Convert to Encrypted Asset'}
                   </button>
                 </div>
               ))}
             </div>
 
             <div style={{ marginTop: '16px', fontSize: '12px', color: '#9ca3af', textAlign: 'center' }}>
-              💡 提示：转换将永久销毁原NFT，请慎重操作。
+              💡 Tip: Conversion will permanently destroy the original NFT, please operate with caution.
             </div>
           </div>
         )}
       </div>
 
-      {/* 加密资产列表 */}
+      {/* Encrypted Asset List */}
       <div style={cardStyle}>
         <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: '16px', color: '#374151' }}>
-          我的加密装备 ({assetCount ? assetCount.toString() : '0'})
+          My Encrypted Equipment ({assetCount ? assetCount.toString() : '0'})
         </h3>
 
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-            加载中...
+            Loading...
           </div>
         ) : assets.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-            还没有任何加密装备
+            No encrypted equipment yet
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
@@ -710,7 +710,7 @@ export function EncryptedAssetManager() {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                   <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
-                    🔒 加密装备 #{asset.assetId}
+                    🔒 Encrypted Equipment #{asset.assetId}
                   </div>
                   <button
                     style={{
@@ -724,46 +724,46 @@ export function EncryptedAssetManager() {
                     onClick={() => handleDecryptAsset(asset.assetId)}
                     disabled={isDecrypting[asset.assetId]}
                   >
-                    {isDecrypting[asset.assetId] ? '解密中...' :
-                     decryptedData[asset.assetId] ? '✅ 已解密' : '🔓 解密查看'}
+                    {isDecrypting[asset.assetId] ? 'Decrypting...' :
+                     decryptedData[asset.assetId] ? '✅ Decrypted' : '🔓 Decrypt to View'}
                   </button>
                 </div>
 
                 <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
                   {decryptedData[asset.assetId] ? (
-                    // 显示解密后的数据
+                    // Display decrypted data
                     <>
                       <div style={{ marginBottom: '4px' }}>
-                        装备类型: <span style={{ fontWeight: '600', color: '#16a34a' }}>
+                        Equipment Type: <span style={{ fontWeight: '600', color: '#16a34a' }}>
                           {EQUIPMENT_TYPES[decryptedData[asset.assetId].equipmentType as EquipmentType]}
                         </span>
                       </div>
                       <div style={{ marginBottom: '4px' }}>
-                        ⚔️ 攻击力: <span style={{ fontWeight: '600', color: '#dc2626' }}>
+                        ⚔️ Attack: <span style={{ fontWeight: '600', color: '#dc2626' }}>
                           {decryptedData[asset.assetId].attack}
                         </span>
                       </div>
                       <div style={{ marginBottom: '4px' }}>
-                        🛡️ 防御力: <span style={{ fontWeight: '600', color: '#2563eb' }}>
+                        🛡️ Defense: <span style={{ fontWeight: '600', color: '#2563eb' }}>
                           {decryptedData[asset.assetId].defense}
                         </span>
                       </div>
                     </>
                   ) : (
-                    // 显示加密状态
+                    // Display encrypted state
                     <>
                       <div style={{ marginBottom: '4px' }}>
-                        装备类型: <span style={{ fontFamily: 'monospace', backgroundColor: '#f3f4f6', padding: '2px 4px', borderRadius: '3px' }}>
+                        Equipment Type: <span style={{ fontFamily: 'monospace', backgroundColor: '#f3f4f6', padding: '2px 4px', borderRadius: '3px' }}>
                           🔐 ***
                         </span>
                       </div>
                       <div style={{ marginBottom: '4px' }}>
-                        攻击力: <span style={{ fontFamily: 'monospace', backgroundColor: '#f3f4f6', padding: '2px 4px', borderRadius: '3px' }}>
+                        Attack: <span style={{ fontFamily: 'monospace', backgroundColor: '#f3f4f6', padding: '2px 4px', borderRadius: '3px' }}>
                           🔐 ***
                         </span>
                       </div>
                       <div style={{ marginBottom: '4px' }}>
-                        防御力: <span style={{ fontFamily: 'monospace', backgroundColor: '#f3f4f6', padding: '2px 4px', borderRadius: '3px' }}>
+                        Defense: <span style={{ fontFamily: 'monospace', backgroundColor: '#f3f4f6', padding: '2px 4px', borderRadius: '3px' }}>
                           🔐 ***
                         </span>
                       </div>
@@ -772,8 +772,8 @@ export function EncryptedAssetManager() {
                 </div>
 
                 <div style={{ fontSize: '12px', color: '#9ca3af', borderTop: '1px solid #e5e7eb', paddingTop: '8px' }}>
-                  资产ID: {asset.assetId}<br/>
-                  所有属性已使用FHE加密保护
+                  Asset ID: {asset.assetId}<br/>
+                  All attributes are protected with FHE encryption
                 </div>
               </div>
             ))}

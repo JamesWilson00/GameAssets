@@ -29,12 +29,12 @@
     "encrypted-types": "^0.0.4"
   },
   "devDependencies": {
-    "@openzeppelin/contracts": "^5.4.0",
     "@fhevm/hardhat-plugin": "^0.1.0",
     "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
     "@nomicfoundation/hardhat-ethers": "^3.1.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.1.0",
     "@nomicfoundation/hardhat-verify": "^2.1.0",
+    "@openzeppelin/contracts": "^5.4.0",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.20",

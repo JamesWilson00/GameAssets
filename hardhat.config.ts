@@ -15,7 +15,6 @@ dotenv.config();
 import "./tasks/accounts";
 import "./tasks/GameAssets";
 import "./tasks/status";
-import "./tasks/SepoliaAssets";
 
 // Environment variables from .env file
 const PRIVATE_KEY: string = process.env.PRIVATE_KEY || "";

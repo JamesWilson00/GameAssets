@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import {
   GAME_ASSET_ADDRESS,
@@ -47,7 +47,7 @@ export function AssetConverter() {
   const { data: encryptedBalance } = useReadContract({
     address: ENCRYPTED_GAME_ASSET_ADDRESS,
     abi: ENCRYPTED_GAME_ASSET_ABI,
-    functionName: 'getUserAssetCount',
+    functionName: 'getEquipmentCount',
     args: address ? [address] : undefined,
   });
 
@@ -60,7 +60,7 @@ export function AssetConverter() {
         address: ASSET_CONVERTER_ADDRESS,
         abi: ASSET_CONVERTER_ABI,
         functionName: 'convertToEncrypted',
-        args: [selectedNFTId],
+        args: [BigInt(selectedNFTId)],
       });
     } catch (error) {
       console.error('转换为加密资产失败:', error);
@@ -75,8 +75,8 @@ export function AssetConverter() {
       await writeContract({
         address: ASSET_CONVERTER_ADDRESS,
         abi: ASSET_CONVERTER_ABI,
-        functionName: 'convertToNFT',
-        args: [selectedEncryptedId],
+        functionName: 'convertToPublic',
+        args: [BigInt(selectedEncryptedId)],
       });
     } catch (error) {
       console.error('转换为NFT失败:', error);

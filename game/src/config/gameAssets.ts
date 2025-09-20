@@ -1,7 +1,7 @@
 // 游戏资产合约地址和ABI - 从deployments/sepolia复制
-export const GAME_ASSET_ADDRESS = '0xf2f91fC32d84b0BCDD67AC6D773bC27fD3F9Dc47';
-export const ENCRYPTED_GAME_ASSET_ADDRESS = '0x109A899a0c2544C4523b802B4793e110AD4CF387';
-export const ASSET_CONVERTER_ADDRESS = '0xA7E2A9d2D9F708694bfC1bCbC8d8d23AD7eeBa45';
+export const GAME_ASSET_ADDRESS = '0xC2d57916F6181DA7fc27d0A2Fb90B629df681aca';
+export const ENCRYPTED_GAME_ASSET_ADDRESS = '0xFC16BD0E2b727C815585f9C27626032F50A93A65';
+export const ASSET_CONVERTER_ADDRESS = '0x87302D97cb378733bf3F9e3495eaacc3BB252822';
 
 // 从GameAsset.json复制的关键ABI函数
 export const GAME_ASSET_ABI = [
@@ -177,10 +177,46 @@ export const GAME_ASSET_ABI = [
     ],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "burn",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "transferFrom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ] as const;
 
-// 加密游戏资产ABI（简化版本）
+// 加密游戏资产ABI（更新后的版本）
 export const ENCRYPTED_GAME_ASSET_ABI = [
   {
     "inputs": [
@@ -191,12 +227,12 @@ export const ENCRYPTED_GAME_ASSET_ABI = [
       },
       {
         "internalType": "externalEuint32",
-        "name": "attack",
+        "name": "attackPower",
         "type": "bytes32"
       },
       {
         "internalType": "externalEuint32",
-        "name": "defense",
+        "name": "defensePower",
         "type": "bytes32"
       },
       {
@@ -205,7 +241,7 @@ export const ENCRYPTED_GAME_ASSET_ABI = [
         "type": "bytes"
       }
     ],
-    "name": "createAsset",
+    "name": "createEncryptedEquipment",
     "outputs": [
       {
         "internalType": "uint256",
@@ -224,21 +260,11 @@ export const ENCRYPTED_GAME_ASSET_ABI = [
         "type": "uint256"
       }
     ],
-    "name": "getAsset",
+    "name": "getEncryptedEquipmentType",
     "outputs": [
       {
         "internalType": "euint8",
-        "name": "equipmentType",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "euint32",
-        "name": "attack",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "euint32",
-        "name": "defense",
+        "name": "",
         "type": "bytes32"
       }
     ],
@@ -248,12 +274,88 @@ export const ENCRYPTED_GAME_ASSET_ABI = [
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "assetId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getEncryptedAttackPower",
+    "outputs": [
+      {
+        "internalType": "euint32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "assetId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getEncryptedDefensePower",
+    "outputs": [
+      {
+        "internalType": "euint32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "assetId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getOwner",
+    "outputs": [
+      {
         "internalType": "address",
-        "name": "user",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "getUserAssetCount",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "getOwnerEquipmentIds",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "getEquipmentCount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -267,30 +369,24 @@ export const ENCRYPTED_GAME_ASSET_ABI = [
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "assetId",
+        "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "index",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
       }
     ],
-    "name": "getUserAssetByIndex",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "transferEncryptedEquipment",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ] as const;
 
-// 资产转换器ABI（简化版本）
+// 资产转换器ABI（更新后的版本）
 export const ASSET_CONVERTER_ABI = [
   {
     "inputs": [
@@ -319,7 +415,7 @@ export const ASSET_CONVERTER_ABI = [
         "type": "uint256"
       }
     ],
-    "name": "convertToNFT",
+    "name": "convertToPublic",
     "outputs": [
       {
         "internalType": "uint256",
@@ -328,6 +424,32 @@ export const ASSET_CONVERTER_ABI = [
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getGameAssetContract",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getEncryptedGameAssetContract",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ] as const;

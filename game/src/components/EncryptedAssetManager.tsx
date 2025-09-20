@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import {
   ENCRYPTED_GAME_ASSET_ADDRESS,
@@ -33,7 +33,7 @@ export function EncryptedAssetManager() {
   const { data: assetCount } = useReadContract({
     address: ENCRYPTED_GAME_ASSET_ADDRESS,
     abi: ENCRYPTED_GAME_ASSET_ABI,
-    functionName: 'getUserAssetCount',
+    functionName: 'getEquipmentCount',
     args: address ? [address] : undefined,
   });
 
@@ -53,7 +53,7 @@ export function EncryptedAssetManager() {
       await writeContract({
         address: ENCRYPTED_GAME_ASSET_ADDRESS,
         abi: ENCRYPTED_GAME_ASSET_ABI,
-        functionName: 'createAsset',
+        functionName: 'createEncryptedEquipment',
         args: [
           encryptedInput.handles[0], // 加密的装备类型
           encryptedInput.handles[1], // 加密的攻击力

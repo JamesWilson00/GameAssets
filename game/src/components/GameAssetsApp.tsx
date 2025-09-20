@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { Header } from './Header';
 import { NFTAssetManager } from './NFTAssetManager';
@@ -8,7 +8,7 @@ import { AssetConverter } from './AssetConverter';
 type TabType = 'nft' | 'encrypted' | 'converter';
 
 export function GameAssetsApp() {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const [activeTab, setActiveTab] = useState<TabType>('nft');
 
   const tabStyle = (isActive: boolean) => ({

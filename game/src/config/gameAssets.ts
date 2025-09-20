@@ -3,19 +3,8 @@ export const GAME_ASSET_ADDRESS = '0xf2f91fC32d84b0BCDD67AC6D773bC27fD3F9Dc47';
 export const ENCRYPTED_GAME_ASSET_ADDRESS = '0x109A899a0c2544C4523b802B4793e110AD4CF387';
 export const ASSET_CONVERTER_ADDRESS = '0xA7E2A9d2D9F708694bfC1bCbC8d8d23AD7eeBa45';
 
-// 从GameAsset.json复制的ABI（简化版本，实际需要完整ABI）
+// 从GameAsset.json复制的关键ABI函数
 export const GAME_ASSET_ABI = [
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "initialOwner",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
   {
     "inputs": [
       {
@@ -30,12 +19,12 @@ export const GAME_ASSET_ABI = [
       },
       {
         "internalType": "uint32",
-        "name": "attack",
+        "name": "attackPower",
         "type": "uint32"
       },
       {
         "internalType": "uint32",
-        "name": "defense",
+        "name": "defensePower",
         "type": "uint32"
       }
     ],
@@ -53,27 +42,17 @@ export const GAME_ASSET_ABI = [
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       }
     ],
-    "name": "getAsset",
+    "name": "balanceOf",
     "outputs": [
       {
-        "internalType": "uint8",
-        "name": "equipmentType",
-        "type": "uint8"
-      },
-      {
-        "internalType": "uint32",
-        "name": "attack",
-        "type": "uint32"
-      },
-      {
-        "internalType": "uint32",
-        "name": "defense",
-        "type": "uint32"
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -87,12 +66,70 @@ export const GAME_ASSET_ABI = [
         "type": "address"
       }
     ],
-    "name": "balanceOf",
+    "name": "getAllEquipments",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint256[]",
         "name": "",
+        "type": "uint256[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint8",
+            "name": "equipmentType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint32",
+            "name": "attackPower",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "defensePower",
+            "type": "uint32"
+          }
+        ],
+        "internalType": "struct GameAsset.Equipment[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
         "type": "uint256"
+      }
+    ],
+    "name": "getEquipment",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint8",
+            "name": "equipmentType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint32",
+            "name": "attackPower",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "defensePower",
+            "type": "uint32"
+          }
+        ],
+        "internalType": "struct GameAsset.Equipment",
+        "name": "",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -309,8 +346,8 @@ export type EquipmentType = keyof typeof EQUIPMENT_TYPES;
 export interface GameAsset {
   tokenId: number;
   equipmentType: EquipmentType;
-  attack: number;
-  defense: number;
+  attackPower: number;
+  defensePower: number;
   owner: string;
 }
 

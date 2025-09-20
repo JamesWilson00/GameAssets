@@ -33,6 +33,14 @@ export function NFTAssetManager() {
     args: address ? [address] : undefined,
   });
 
+  // 读取用户的所有装备
+  const { data: allEquipments } = useReadContract({
+    address: GAME_ASSET_ADDRESS,
+    abi: GAME_ASSET_ABI,
+    functionName: 'getAllEquipments',
+    args: address ? [address] : undefined,
+  });
+
   // 创建NFT资产
   const handleMintAsset = async () => {
     if (!address) return;
@@ -51,17 +59,22 @@ export function NFTAssetManager() {
 
   // 加载用户资产
   const loadUserAssets = async () => {
-    if (!address || !balance) return;
+    if (!allEquipments || !address) return;
 
     setIsLoading(true);
     try {
-      const userAssets: GameAsset[] = [];
-      const balanceNum = Number(balance);
+      const [tokenIds, equipments] = allEquipments as [bigint[], any[]];
 
-      for (let i = 0; i < balanceNum; i++) {
-        // TODO: 实现获取用户的tokenId和资产详情的逻辑
-        // 这里需要根据实际合约ABI调整
-      }
+      const userAssets: GameAsset[] = tokenIds.map((tokenId, index) => {
+        const equipment = equipments[index];
+        return {
+          tokenId: Number(tokenId),
+          equipmentType: Number(equipment.equipmentType) as EquipmentType,
+          attackPower: Number(equipment.attackPower),
+          defensePower: Number(equipment.defensePower),
+          owner: address
+        };
+      });
 
       setAssets(userAssets);
     } catch (error) {
@@ -83,7 +96,7 @@ export function NFTAssetManager() {
 
   useEffect(() => {
     loadUserAssets();
-  }, [address, balance]);
+  }, [address, allEquipments]);
 
   const cardStyle = {
     border: '1px solid #e5e7eb',
@@ -242,10 +255,10 @@ export function NFTAssetManager() {
                   {EQUIPMENT_TYPES[asset.equipmentType]} #{asset.tokenId}
                 </div>
                 <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>
-                  攻击力: {asset.attack}
+                  攻击力: {asset.attackPower}
                 </div>
                 <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
-                  防御力: {asset.defense}
+                  防御力: {asset.defensePower}
                 </div>
                 <div style={{ fontSize: '12px', color: '#9ca3af' }}>
                   Token ID: {asset.tokenId}

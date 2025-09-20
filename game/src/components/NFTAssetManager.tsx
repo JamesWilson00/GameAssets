@@ -152,18 +152,7 @@ export function NFTAssetManager() {
     overflow: 'hidden'
   };
 
-  const inputStyle = {
-    width: '100%',
-    padding: '8px 12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
-    fontSize: '14px'
-  };
 
-  const selectStyle = {
-    ...inputStyle,
-    cursor: 'pointer'
-  };
 
   return (
     <div>

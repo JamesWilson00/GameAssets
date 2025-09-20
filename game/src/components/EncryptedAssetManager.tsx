@@ -20,7 +20,6 @@ export function EncryptedAssetManager() {
   const [assets, setAssets] = useState<EncryptedGameAsset[]>([]);
   const [nfts, setNfts] = useState<GameAsset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingNfts, setIsLoadingNfts] = useState(false);
   const [isDecrypting, setIsDecrypting] = useState<{ [key: number]: boolean }>({});
   const [isConverting, setIsConverting] = useState<{ [key: number]: boolean }>({});
   const [isApproving, setIsApproving] = useState<{ [key: number]: boolean }>({});
@@ -36,8 +35,8 @@ export function EncryptedAssetManager() {
 
 
   // Contract interaction
-  const { writeContract, data: hash, error, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+  const { writeContract, data: hash } = useWriteContract();
+  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   });
 
@@ -120,7 +119,7 @@ export function EncryptedAssetManager() {
   // Read each NFT's approval status
   const getNftApprovals = (tokenIds: number[]) => {
     return tokenIds.map(tokenId => ({
-      address: GAME_ASSET_ADDRESS,
+      address: GAME_ASSET_ADDRESS as `0x${string}`,
       abi: GAME_ASSET_ABI,
       functionName: 'getApproved',
       args: [BigInt(tokenId)],
@@ -449,13 +448,6 @@ export function EncryptedAssetManager() {
     transition: 'background-color 0.2s'
   };
 
-  const inputStyle = {
-    width: '100%',
-    padding: '8px 12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
-    fontSize: '14px'
-  };
 
 
   if (fheLoading) {

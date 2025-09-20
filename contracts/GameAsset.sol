@@ -53,14 +53,20 @@ contract GameAsset is ERC721, ERC721Enumerable, Ownable, AccessControl {
         uint256 balance = balanceOf(owner);
         uint256[] memory tokenIds = new uint256[](balance);
         Equipment[] memory ownerEquipments = new Equipment[](balance);
-        
+
         for (uint256 i = 0; i < balance; i++) {
             uint256 tokenId = tokenOfOwnerByIndex(owner, i);
             tokenIds[i] = tokenId;
             ownerEquipments[i] = equipments[tokenId];
         }
-        
+
         return (tokenIds, ownerEquipments);
+    }
+
+    function burn(uint256 tokenId) public {
+        require(_isAuthorized(_ownerOf(tokenId), msg.sender, tokenId), "Not authorized to burn");
+        delete equipments[tokenId];
+        _burn(tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId)

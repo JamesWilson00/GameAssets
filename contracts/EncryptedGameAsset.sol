@@ -3,14 +3,17 @@ pragma solidity ^0.8.24;
 
 import {FHE, euint8, euint32, externalEuint8, externalEuint32, ebool} from "@fhevm/solidity/lib/FHE.sol";
 import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract EncryptedGameAsset is SepoliaConfig {
+contract EncryptedGameAsset is SepoliaConfig, AccessControl {
     struct EncryptedEquipment {
         euint8 equipmentType;   // Encrypted equipment type (1-4)
         euint32 attackPower;    // Encrypted attack power
         euint32 defensePower;   // Encrypted defense power
         address owner;          // Owner address (not encrypted)
     }
+
+    bytes32 public constant CONVERTER_ROLE = keccak256("CONVERTER_ROLE");
 
     mapping(uint256 => EncryptedEquipment) public encryptedEquipments;
     mapping(address => uint256[]) public ownerEquipments;
@@ -19,8 +22,9 @@ contract EncryptedGameAsset is SepoliaConfig {
     event EncryptedEquipmentCreated(uint256 indexed assetId, address indexed owner);
     event EncryptedEquipmentTransferred(uint256 indexed assetId, address indexed from, address indexed to);
 
-    constructor() {
+    constructor(address initialOwner) {
         _nextAssetId = 1;
+        _grantRole(DEFAULT_ADMIN_ROLE, initialOwner);
     }
 
     function createEncryptedEquipment(
@@ -62,6 +66,37 @@ contract EncryptedGameAsset is SepoliaConfig {
         FHE.allow(encryptedDefense, msg.sender);
 
         emit EncryptedEquipmentCreated(assetId, msg.sender);
+        return assetId;
+    }
+
+    // Function for converter contract to create encrypted equipment from already encrypted values
+    function createEncryptedEquipmentFromConverter(
+        euint8 equipmentType,
+        euint32 attackPower,
+        euint32 defensePower,
+        address owner
+    ) external onlyRole(CONVERTER_ROLE) returns (uint256) {
+        uint256 assetId = _nextAssetId;
+        _nextAssetId++;
+
+        encryptedEquipments[assetId] = EncryptedEquipment({
+            equipmentType: equipmentType,
+            attackPower: attackPower,
+            defensePower: defensePower,
+            owner: owner
+        });
+
+        ownerEquipments[owner].push(assetId);
+
+        // Set ACL permissions
+        FHE.allowThis(equipmentType);
+        FHE.allowThis(attackPower);
+        FHE.allowThis(defensePower);
+        FHE.allow(equipmentType, owner);
+        FHE.allow(attackPower, owner);
+        FHE.allow(defensePower, owner);
+
+        emit EncryptedEquipmentCreated(assetId, owner);
         return assetId;
     }
 

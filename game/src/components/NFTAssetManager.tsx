@@ -13,10 +13,12 @@ export function NFTAssetManager() {
   const [assets, setAssets] = useState<GameAsset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 表单状态
-  const [equipmentType, setEquipmentType] = useState<EquipmentType>(1);
-  const [attack, setAttack] = useState(50);
-  const [defense, setDefense] = useState(50);
+  // 随机装备状态
+  const [randomEquipment, setRandomEquipment] = useState<{
+    equipmentType: EquipmentType;
+    attack: number;
+    defense: number;
+  } | null>(null);
 
   // 合约交互
   const { writeContract, data: hash, error, isPending } = useWriteContract();
@@ -40,16 +42,44 @@ export function NFTAssetManager() {
     args: address ? [address] : undefined,
   });
 
+  // 随机生成装备
+  const generateRandomEquipment = () => {
+    const equipmentTypes = [1, 2, 3, 4] as EquipmentType[];
+    const randomType = equipmentTypes[Math.floor(Math.random() * equipmentTypes.length)];
+    const randomAttack = Math.floor(Math.random() * 200) + 50; // 50-249
+    const randomDefense = Math.floor(Math.random() * 200) + 50; // 50-249
+
+    const randomEquip = {
+      equipmentType: randomType,
+      attack: randomAttack,
+      defense: randomDefense
+    };
+
+    console.log('生成随机装备:', randomEquip);
+
+    setRandomEquipment(randomEquip);
+  };
+
   // 创建NFT资产
   const handleMintAsset = async () => {
-    if (!address) return;
+    if (!address || !randomEquipment) {
+      alert('请先生成随机装备！');
+      return;
+    }
+
+    console.log('准备铸造NFT，参数:', {
+      to: address,
+      equipmentType: randomEquipment.equipmentType,
+      attack: randomEquipment.attack,
+      defense: randomEquipment.defense
+    });
 
     try {
       await writeContract({
         address: GAME_ASSET_ADDRESS,
         abi: GAME_ASSET_ABI,
         functionName: 'mint',
-        args: [address, equipmentType, attack, defense],
+        args: [address, randomEquipment.equipmentType, randomEquipment.attack, randomEquipment.defense],
       });
     } catch (error) {
       console.error('创建NFT失败:', error);
@@ -86,10 +116,8 @@ export function NFTAssetManager() {
   useEffect(() => {
     if (isConfirmed) {
       loadUserAssets();
-      // 重置表单
-      setEquipmentType(1);
-      setAttack(50);
-      setDefense(50);
+      // 重置随机装备
+      setRandomEquipment(null);
     }
   }, [isConfirmed]);
 
@@ -138,65 +166,77 @@ export function NFTAssetManager() {
       {/* 创建新资产 */}
       <div style={{ ...cardStyle, marginBottom: '24px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: '16px', color: '#374151' }}>
-          创建新装备NFT
+          随机生成装备NFT
         </h3>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-              装备类型
-            </label>
-            <select
-              style={selectStyle}
-              value={equipmentType}
-              onChange={(e) => setEquipmentType(Number(e.target.value) as EquipmentType)}
-            >
-              {Object.entries(EQUIPMENT_TYPES).map(([key, value]) => (
-                <option key={key} value={key}>{value}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-              攻击力 (1-1000)
-            </label>
-            <input
-              type="number"
-              style={inputStyle}
-              min="1"
-              max="1000"
-              value={attack}
-              onChange={(e) => setAttack(Number(e.target.value))}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-              防御力 (1-1000)
-            </label>
-            <input
-              type="number"
-              style={inputStyle}
-              min="1"
-              max="1000"
-              value={defense}
-              onChange={(e) => setDefense(Number(e.target.value))}
-            />
-          </div>
+        <div style={{
+          backgroundColor: '#f0fdf4',
+          border: '1px solid #bbf7d0',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '16px'
+        }}>
+          {randomEquipment ? (
+            <div>
+              <div style={{ fontSize: '16px', fontWeight: '600', color: '#16a34a', marginBottom: '12px' }}>
+                🎲 随机装备已生成：
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>装备类型</div>
+                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+                    {EQUIPMENT_TYPES[randomEquipment.equipmentType]}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>攻击力</div>
+                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#dc2626' }}>
+                    {randomEquipment.attack}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>防御力</div>
+                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#2563eb' }}>
+                    {randomEquipment.defense}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', color: '#6b7280' }}>
+              点击"🎲 随机生成装备"按钮来生成随机装备属性
+            </div>
+          )}
         </div>
 
-        <button
-          style={{
-            ...buttonStyle,
-            opacity: isPending || isConfirming ? 0.6 : 1,
-            cursor: isPending || isConfirming ? 'not-allowed' : 'pointer'
-          }}
-          onClick={handleMintAsset}
-          disabled={isPending || isConfirming}
-        >
-          {isPending ? '确认中...' : isConfirming ? '铸造中...' : '创建装备NFT'}
-        </button>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button
+            style={{
+              ...buttonStyle,
+              backgroundColor: '#8b5cf6',
+              flex: '1',
+              minWidth: '150px'
+            }}
+            onClick={generateRandomEquipment}
+          >
+            🎲 随机生成装备
+          </button>
+
+          <button
+            style={{
+              ...buttonStyle,
+              backgroundColor: '#16a34a',
+              flex: '1',
+              minWidth: '150px',
+              opacity: isPending || isConfirming || !randomEquipment ? 0.6 : 1,
+              cursor: isPending || isConfirming || !randomEquipment ? 'not-allowed' : 'pointer'
+            }}
+            onClick={handleMintAsset}
+            disabled={isPending || isConfirming || !randomEquipment}
+          >
+            {isPending ? '确认中...' : isConfirming ? '铸造中...' : '🎮 创建装备NFT'}
+          </button>
+        </div>
 
         {error && (
           <div style={{
@@ -222,7 +262,7 @@ export function NFTAssetManager() {
             color: '#16a34a',
             fontSize: '14px'
           }}>
-            NFT创建成功！
+            🎉 随机装备NFT创建成功！
           </div>
         )}
       </div>

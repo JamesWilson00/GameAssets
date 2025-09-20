@@ -34,10 +34,6 @@ export function EncryptedAssetManager() {
     }
   }>({});
 
-  // 表单状态
-  const [equipmentType, setEquipmentType] = useState<EquipmentType>(1);
-  const [attack, setAttack] = useState(50);
-  const [defense, setDefense] = useState(50);
 
   // 合约交互
   const { writeContract, data: hash, error, isPending } = useWriteContract();
@@ -120,34 +116,6 @@ export function EncryptedAssetManager() {
     },
   });
 
-  // 创建加密资产
-  const handleCreateAsset = async () => {
-    if (!address || !fheInstance || fheLoading) return;
-
-    try {
-      // 使用Zama FHE加密输入
-      const input = fheInstance.createEncryptedInput(ENCRYPTED_GAME_ASSET_ADDRESS, address);
-      input.add8(equipmentType);  // 装备类型
-      input.add32(attack);        // 攻击力
-      input.add32(defense);       // 防御力
-
-      const encryptedInput = await input.encrypt();
-
-      await writeContract({
-        address: ENCRYPTED_GAME_ASSET_ADDRESS,
-        abi: ENCRYPTED_GAME_ASSET_ABI,
-        functionName: 'createEncryptedEquipment',
-        args: [
-          encryptedInput.handles[0], // 加密的装备类型
-          encryptedInput.handles[1], // 加密的攻击力
-          encryptedInput.handles[2], // 加密的防御力
-          encryptedInput.inputProof
-        ],
-      });
-    } catch (error) {
-      console.error('创建加密资产失败:', error);
-    }
-  };
 
   // 读取每个NFT的授权状态
   const getNftApprovals = (tokenIds: number[]) => {
@@ -177,6 +145,7 @@ export function EncryptedAssetManager() {
       enabled: !!address,
     },
   });
+
 
   // 批量授权所有NFT
   const handleBatchApproveAllNfts = async () => {
@@ -248,13 +217,11 @@ export function EncryptedAssetManager() {
         functionName: 'convertToEncrypted',
         args: [BigInt(tokenId)],
       });
-      console.log('转换完成！');
-      // 重置授权状态
-      setApprovalStatus(prev => ({ ...prev, [tokenId]: false }));
+      console.log('转换交易已提交，等待确认...');
+      // 注意：不要在这里重置授权状态，等交易确认后再处理
     } catch (error) {
       console.error('转换失败:', error);
       alert('转换失败: ' + (error as Error).message);
-    } finally {
       setIsConverting(prev => ({ ...prev, [tokenId]: false }));
     }
   };
@@ -424,11 +391,12 @@ export function EncryptedAssetManager() {
 
   useEffect(() => {
     if (isConfirmed) {
+      console.log('交易确认成功，重新加载数据...');
       loadUserAssets();
-      // 重置表单
-      setEquipmentType(1);
-      setAttack(50);
-      setDefense(50);
+      // 重置所有转换状态
+      setIsConverting({});
+      // 重新获取授权状态
+      refetchApprovals();
     }
   }, [isConfirmed]);
 
@@ -489,10 +457,6 @@ export function EncryptedAssetManager() {
     fontSize: '14px'
   };
 
-  const selectStyle = {
-    ...inputStyle,
-    cursor: 'pointer'
-  };
 
   if (fheLoading) {
     return (
@@ -538,97 +502,6 @@ export function EncryptedAssetManager() {
         <strong>🔒 隐私保护：</strong> 使用Zama FHE技术加密装备属性，确保游戏数据完全隐私
       </div>
 
-      {/* 创建新加密资产 */}
-      <div style={{ ...cardStyle, marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '500', marginBottom: '16px', color: '#374151' }}>
-          创建新的加密装备
-        </h3>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-              装备类型 (将被加密)
-            </label>
-            <select
-              style={selectStyle}
-              value={equipmentType}
-              onChange={(e) => setEquipmentType(Number(e.target.value) as EquipmentType)}
-            >
-              {Object.entries(EQUIPMENT_TYPES).map(([key, value]) => (
-                <option key={key} value={key}>{value}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-              攻击力 (将被加密)
-            </label>
-            <input
-              type="number"
-              style={inputStyle}
-              min="1"
-              max="1000"
-              value={attack}
-              onChange={(e) => setAttack(Number(e.target.value))}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-              防御力 (将被加密)
-            </label>
-            <input
-              type="number"
-              style={inputStyle}
-              min="1"
-              max="1000"
-              value={defense}
-              onChange={(e) => setDefense(Number(e.target.value))}
-            />
-          </div>
-        </div>
-
-        <button
-          style={{
-            ...buttonStyle,
-            opacity: isPending || isConfirming || fheLoading || !fheInstance ? 0.6 : 1,
-            cursor: isPending || isConfirming || fheLoading || !fheInstance ? 'not-allowed' : 'pointer'
-          }}
-          onClick={handleCreateAsset}
-          disabled={isPending || isConfirming || fheLoading || !fheInstance}
-        >
-          {isPending ? '确认中...' : isConfirming ? '创建中...' : '创建加密装备'}
-        </button>
-
-        {error && (
-          <div style={{
-            marginTop: '12px',
-            padding: '8px 12px',
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '6px',
-            color: '#dc2626',
-            fontSize: '14px'
-          }}>
-            错误: {error.message}
-          </div>
-        )}
-
-        {isConfirmed && (
-          <div style={{
-            marginTop: '12px',
-            padding: '8px 12px',
-            backgroundColor: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            borderRadius: '6px',
-            color: '#16a34a',
-            fontSize: '14px'
-          }}>
-            加密资产创建成功！所有属性已安全加密。
-          </div>
-        )}
-      </div>
 
       {/* 第一步：NFT授权区域 - 只在有未授权的NFT时显示 */}
       {nfts.length > 0 && nfts.some(nft => !approvalStatus[nft.tokenId]) && (
@@ -881,17 +754,17 @@ export function EncryptedAssetManager() {
                     <>
                       <div style={{ marginBottom: '4px' }}>
                         装备类型: <span style={{ fontFamily: 'monospace', backgroundColor: '#f3f4f6', padding: '2px 4px', borderRadius: '3px' }}>
-                          🔐 加密中...
+                          🔐 ***
                         </span>
                       </div>
                       <div style={{ marginBottom: '4px' }}>
                         攻击力: <span style={{ fontFamily: 'monospace', backgroundColor: '#f3f4f6', padding: '2px 4px', borderRadius: '3px' }}>
-                          🔐 加密中...
+                          🔐 ***
                         </span>
                       </div>
                       <div style={{ marginBottom: '4px' }}>
                         防御力: <span style={{ fontFamily: 'monospace', backgroundColor: '#f3f4f6', padding: '2px 4px', borderRadius: '3px' }}>
-                          🔐 加密中...
+                          🔐 ***
                         </span>
                       </div>
                     </>

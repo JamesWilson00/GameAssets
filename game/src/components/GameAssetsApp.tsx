@@ -3,9 +3,8 @@ import { useAccount } from 'wagmi';
 import { Header } from './Header';
 import { NFTAssetManager } from './NFTAssetManager';
 import { EncryptedAssetManager } from './EncryptedAssetManager';
-import { AssetConverter } from './AssetConverter';
 
-type TabType = 'nft' | 'encrypted' | 'converter';
+type TabType = 'nft' | 'encrypted';
 
 export function GameAssetsApp() {
   const { isConnected } = useAccount();
@@ -99,18 +98,11 @@ export function GameAssetsApp() {
             >
               加密游戏资产
             </button>
-            <button
-              style={tabStyle(activeTab === 'converter')}
-              onClick={() => setActiveTab('converter')}
-            >
-              资产转换
-            </button>
           </div>
 
           <div style={contentStyle}>
             {activeTab === 'nft' && <NFTAssetManager />}
             {activeTab === 'encrypted' && <EncryptedAssetManager />}
-            {activeTab === 'converter' && <AssetConverter />}
           </div>
         </div>
 
@@ -128,8 +120,7 @@ export function GameAssetsApp() {
           </h3>
           <ul style={{ lineHeight: '1.6', paddingLeft: '20px' }}>
             <li><strong>普通NFT资产：</strong>创建和管理装备类型(1-4)、攻击力、防御力透明可见的NFT</li>
-            <li><strong>加密游戏资产：</strong>使用Zama FHE技术加密装备属性，保护游戏数据隐私</li>
-            <li><strong>资产转换：</strong>支持普通NFT与加密资产之间的相互转换</li>
+            <li><strong>加密游戏资产：</strong>使用Zama FHE技术加密装备属性，保护游戏数据隐私，支持普通NFT转换为加密资产</li>
           </ul>
         </div>
       </div>

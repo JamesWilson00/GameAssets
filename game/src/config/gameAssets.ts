@@ -1,7 +1,6 @@
 // 游戏资产合约地址和ABI - 从deployments/sepolia复制
-export const GAME_ASSET_ADDRESS = '0xC2d57916F6181DA7fc27d0A2Fb90B629df681aca';
-export const ENCRYPTED_GAME_ASSET_ADDRESS = '0xFC16BD0E2b727C815585f9C27626032F50A93A65';
-export const ASSET_CONVERTER_ADDRESS = '0x87302D97cb378733bf3F9e3495eaacc3BB252822';
+export const GAME_ASSET_ADDRESS = '0xc8010c6A0c602Db46C6E0e42C744AE3c3923d866';
+export const ENCRYPTED_GAME_ASSET_ADDRESS = '0x8D0A458F6dFe1656b6BbEa206E5A35BBA1d1992a';
 
 // 从GameAsset.json复制的关键ABI函数
 export const GAME_ASSET_ABI = [
@@ -213,6 +212,43 @@ export const GAME_ASSET_ABI = [
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "approve",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getApproved",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   }
 ] as const;
 
@@ -383,11 +419,7 @@ export const ENCRYPTED_GAME_ASSET_ABI = [
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
-  }
-] as const;
-
-// 资产转换器ABI（更新后的版本）
-export const ASSET_CONVERTER_ABI = [
+  },
   {
     "inputs": [
       {
@@ -397,32 +429,7 @@ export const ASSET_CONVERTER_ABI = [
       }
     ],
     "name": "convertToEncrypted",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "assetId",
-        "type": "uint256"
-      }
-    ],
-    "name": "convertToPublic",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -440,16 +447,16 @@ export const ASSET_CONVERTER_ABI = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getEncryptedGameAssetContract",
-    "outputs": [
+    "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "_gameAssetContract",
         "type": "address"
       }
     ],
-    "stateMutability": "view",
+    "name": "setGameAssetContract",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ] as const;
